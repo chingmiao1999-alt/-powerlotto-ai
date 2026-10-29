@@ -31,7 +31,7 @@ label{display:block;font-weight:650;font-size:14px;margin:10px 0 5px}input,selec
 <p class="muted">每一行輸入一期資料：第一區 6 個號碼，接著第二區 1 個號碼，以逗號或空格分隔。範例：01,08,12,19,27,36,05。請先核對官方開獎資料再貼上。</p>
 <label for="history">歷史開獎資料（每行一期）</label>
 <textarea id="history" placeholder="01,08,12,19,27,36,05&#10;02,09,13,20,28,37,06"></textarea>
-<div class="row" style="margin-top:10px"><button class="btn" id="analyze">分析資料</button><button class="btn secondary" id="example">填入示範資料</button><button class="btn danger" id="clearHistory">清空資料</button></div>
+<div class="row" style="margin-top:10px"><button class="btn" id="analyze">分析資料</button><button class="btn secondary" id="loadOfficial">自動載入官方資料</button><button class="btn secondary" id="example">填入示範資料</button><button class="btn danger" id="clearHistory">清空資料</button></div>
 <p class="muted">示範資料只是格式展示，不是真實開獎紀錄，不能用於判斷號碼趨勢。</p>
 <div id="analysis" class="hidden"></div>
 </section>
@@ -50,7 +50,62 @@ function generate(){const count=Number($('count').value),wrap=$('tickets');wrap.
 $('generate').addEventListener('click',generate);$('clearTickets').addEventListener('click',()=>$('tickets').innerHTML='');
 $('example').addEventListener('click',()=>{$('history').value='01,08,12,19,27,36,05\\n02,09,13,20,28,37,06\\n03,10,14,21,29,38,07';});
 $('clearHistory').addEventListener('click',()=>{$('history').value='';$('analysis').className='hidden';$('analysis').innerHTML='';});
-$('analyze').addEventListener('click',()=>{
+$('loadOfficial').addEventListener('click', async () => {
+  const btn = $('loadOfficial');
+  btn.disabled = true;
+  btn.textContent = '官方資料載入中…';
+
+  try {
+    const allRows = [];
+    const now = new Date();
+
+    for (let i = 0; i < 60 && allRows.length < 120; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const url = `https://api.taiwanlottery.com/TLCAPIWeB/Lottery/SuperLotto638Result?month=${month}&pageSize=50`;
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('官方資料連線失敗');
+
+      const json = await response.json();
+      const rows = json?.content?.superLotto638Res || [];
+      allRows.push(...rows);
+    }
+
+    const seen = new Set();
+    const lines = [];
+
+    for (const row of allRows) {
+      const nums = row.drawNumberAppear;
+      if (!Array.isArray(nums) || nums.length !== 7) continue;
+
+      const a = nums.slice(0, 6).map(Number);
+      const b = Number(nums[6]);
+
+      if (a.some(n => !Number.isInteger(n) || n < 1 || n > 38)) continue;
+      if (new Set(a).size !== 6 || !Number.isInteger(b) || b < 1 || b > 8) continue;
+
+      const key = row.period || nums.join(',');
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      lines.push(nums.map(n => String(n).padStart(2, '0')).join(','));
+      if (lines.length >= 120) break;
+    }
+
+    if (!lines.length) throw new Error('沒有取得有效開獎資料');
+
+    $('history').value = lines.join('\n');
+    $('analyze').click();
+    alert(`完成！已載入 ${lines.length} 期威力彩資料。`);
+  } catch (error) {
+    alert('載入失敗，請稍後再試。也可能是官方資料介面暫時無法連線。');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '自動載入官方資料';
+  }
+});
+ $('analyze').addEventListener('click',()=>{
  const lines=$('history').value.trim().split(/\\n+/).filter(x=>x.trim());let draws=[],errors=[];
  lines.forEach((line,i)=>{let nums=line.trim().split(/[\\s,，、;；]+/).filter(Boolean).map(Number);if(nums.length!==7||nums.some(n=>!Number.isInteger(n))||nums.slice(0,6).some(n=>n<1||n>38)||nums[6]<1||nums[6]>8||new Set(nums.slice(0,6)).size!==6){errors.push(`第 ${i+1} 行格式錯誤`);return;}draws.push(nums)});
  const out=$('analysis');out.className='';if(errors.length){out.innerHTML='<div class="note" style="margin-top:12px">'+errors.join('；')+'。請確認每行是 6 個第一區號碼＋1 個第二區號碼，第一區不可重複。</div>';return}
@@ -60,6 +115,3 @@ $('analyze').addEventListener('click',()=>{
  const top2=Array.from({length:8},(_,i)=>i+1).sort((a,b)=>f2[b]-f2[a]||a-b).slice(0,3);
  out.innerHTML=`<div style="margin-top:14px"><div class="statgrid"><div class="stat"><strong>${draws.length}</strong><span>有效期數</span></div><div class="stat"><strong>${draws.length*6}</strong><span>第一區號碼紀錄數</span></div></div><h3 style="font-size:15px;margin:16px 0 5px">第一區出現次數</h3><div class="freq">${Array.from({length:38},(_,i)=>i+1).map(n=>`<div class="freqitem ${top1.includes(n)?'hot':''}">${fmt(n)}<b>${f1[n]}</b></div>`).join('')}</div><h3 style="font-size:15px;margin:16px 0 5px">第二區出現次數</h3><div class="freq" style="grid-template-columns:repeat(4,minmax(0,1fr))">${Array.from({length:8},(_,i)=>i+1).map(n=>`<div class="freqitem ${top2.includes(n)?'hot':''}">${fmt(n)}<b>${f2[n]}</b></div>`).join('')}</div><p class="muted" style="margin-top:12px">橘色只標示你輸入資料中出現次數較高的號碼，不代表下一期比較容易開出。請確認資料來源、期數及順序正確。</p></div>`;
 });
-</script>
-</body>
-</html>
