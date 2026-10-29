@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12304a">
+<title>威力彩智慧分析 V1.0</title>
+<style>
+:root{--navy:#12304a;--blue:#1d6fa5;--gold:#f2bd4b;--bg:#f3f6f8;--card:#fff;--text:#18232d;--muted:#647482;--line:#dce4ea}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text);line-height:1.5}
+header{background:linear-gradient(135deg,#12304a,#1d6fa5);color:white;padding:24px 18px 22px}header h1{font-size:23px;margin:0 0 5px}header p{margin:0;color:#e2edf5;font-size:14px}
+main{max-width:760px;margin:auto;padding:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px;box-shadow:0 3px 12px #102c4010}
+h2{font-size:18px;margin:0 0 10px}.muted{color:var(--muted);font-size:13px}.btn{border:0;border-radius:11px;padding:12px 14px;background:var(--blue);color:white;font-size:16px;font-weight:650;cursor:pointer}.btn.secondary{background:#e8f1f7;color:var(--navy)}.btn.danger{background:#fff0ed;color:#9c3022}.row{display:flex;gap:8px;flex-wrap:wrap}.row .btn{flex:1;min-width:120px}
+.ticket{border:1px solid var(--line);border-radius:13px;padding:12px;margin-top:10px}.ticket-title{font-size:13px;color:var(--muted);margin-bottom:8px}.balls{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.ball{display:inline-flex;align-items:center;justify-content:center;width:37px;height:37px;border-radius:50%;background:#e6f2fb;border:1px solid #bad8eb;color:#124e76;font-weight:750}.ball.special{background:#fff0cf;border-color:#f0d18a;color:#835900;width:37px;height:37px}.smallball{width:30px;height:30px;font-size:13px}
+label{display:block;font-weight:650;font-size:14px;margin:10px 0 5px}input,select,textarea{width:100%;padding:11px;border:1px solid #cbd7df;border-radius:9px;font:inherit;background:white}textarea{min-height:100px;resize:vertical}.statgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{background:#f6f9fb;border-radius:10px;padding:10px}.stat strong{display:block;font-size:21px;color:var(--navy)}.stat span{font-size:12px;color:var(--muted)}.freq{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin-top:10px}.freqitem{border:1px solid var(--line);border-radius:8px;text-align:center;padding:6px 1px;font-size:12px}.freqitem b{display:block;font-size:14px}.freqitem.hot{background:#fff4df;border-color:#e6c16b}.note{background:#fff8e8;border:1px solid #f1d99b;border-radius:10px;padding:11px;font-size:13px;color:#684e12}.hidden{display:none}footer{text-align:center;color:var(--muted);font-size:12px;padding:5px 18px 24px}
+</style>
+</head>
+<body>
+<header><h1>🎯 威力彩智慧分析 V1.0</h1><p>手機版選號、歷史資料統計與簡易回測工具</p></header>
+<main>
+<section class="card">
+<h2>① 自動產生號碼</h2>
+<p class="muted">第一區 01–38 選 6 個不重複號碼；第二區 01–08 選 1 個號碼。</p>
+<label for="count">要產生幾組？</label><select id="count"><option>1</option><option>3</option><option>5</option><option>10</option></select>
+<div class="row" style="margin-top:12px"><button class="btn" id="generate">隨機產生號碼</button><button class="btn secondary" id="clearTickets">清除結果</button></div>
+<div id="tickets"></div>
+<p class="muted">每組號碼均由隨機方式產生。不同組合的中獎機率不會因為本工具的排序或分析而提高。</p>
+</section>
+<section class="card">
+<h2>② 加入歷史開獎資料</h2>
+<p class="muted">每一行輸入一期資料：第一區 6 個號碼，接著第二區 1 個號碼，以逗號或空格分隔。範例：01,08,12,19,27,36,05。請先核對官方開獎資料再貼上。</p>
+<label for="history">歷史開獎資料（每行一期）</label>
+<textarea id="history" placeholder="01,08,12,19,27,36,05&#10;02,09,13,20,28,37,06"></textarea>
+<div class="row" style="margin-top:10px"><button class="btn" id="analyze">分析資料</button><button class="btn secondary" id="example">填入示範資料</button><button class="btn danger" id="clearHistory">清空資料</button></div>
+<p class="muted">示範資料只是格式展示，不是真實開獎紀錄，不能用於判斷號碼趨勢。</p>
+<div id="analysis" class="hidden"></div>
+</section>
+<section class="card">
+<h2>③ 簡易回測（避免誤判）</h2>
+<p class="muted">目前此版本只統計你貼上的歷史資料，並顯示頻率；尚未宣稱任何選號規則有預測能力。下一版可以加入「只用過去資料選號，再測試下一期」的無前視偏誤回測。</p>
+<div class="note">重要：若每期開獎公平且彼此獨立，過去常開或久未開的號碼，不會因此變得更容易或更難在下一期開出。</div>
+</section>
+</main>
+<footer>本工具僅供資料整理與機率學習。請理性娛樂；未滿 18 歲不得購買彩券。</footer>
+<script>
+const $=id=>document.getElementById(id);
+function pickUnique(max,n){let a=Array.from({length:max},(_,i)=>i+1);for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a.slice(0,n).sort((x,y)=>x-y)}
+function fmt(n){return String(n).padStart(2,'0')}
+function generate(){const count=Number($('count').value),wrap=$('tickets');wrap.innerHTML='';for(let i=1;i<=count;i++){let a=pickUnique(38,6),b=pickUnique(8,1)[0];let div=document.createElement('div');div.className='ticket';div.innerHTML=`<div class="ticket-title">第 ${i} 組</div><div class="balls">${a.map(n=>`<span class="ball">${fmt(n)}</span>`).join('')}<span style="padding:0 2px;color:#7a8791">＋</span><span class="ball special">${fmt(b)}</span></div>`;wrap.appendChild(div)}}
+$('generate').addEventListener('click',generate);$('clearTickets').addEventListener('click',()=>$('tickets').innerHTML='');
+$('example').addEventListener('click',()=>{$('history').value='01,08,12,19,27,36,05\\n02,09,13,20,28,37,06\\n03,10,14,21,29,38,07';});
+$('clearHistory').addEventListener('click',()=>{$('history').value='';$('analysis').className='hidden';$('analysis').innerHTML='';});
+$('analyze').addEventListener('click',()=>{
+ const lines=$('history').value.trim().split(/\\n+/).filter(x=>x.trim());let draws=[],errors=[];
+ lines.forEach((line,i)=>{let nums=line.trim().split(/[\\s,，、;；]+/).filter(Boolean).map(Number);if(nums.length!==7||nums.some(n=>!Number.isInteger(n))||nums.slice(0,6).some(n=>n<1||n>38)||nums[6]<1||nums[6]>8||new Set(nums.slice(0,6)).size!==6){errors.push(`第 ${i+1} 行格式錯誤`);return;}draws.push(nums)});
+ const out=$('analysis');out.className='';if(errors.length){out.innerHTML='<div class="note" style="margin-top:12px">'+errors.join('；')+'。請確認每行是 6 個第一區號碼＋1 個第二區號碼，第一區不可重複。</div>';return}
+ if(!draws.length){out.innerHTML='<p class="muted">請先輸入至少一期資料。</p>';return}
+ const f1=Array(39).fill(0),f2=Array(9).fill(0);draws.forEach(d=>{d.slice(0,6).forEach(n=>f1[n]++);f2[d[6]]++});
+ const top1=Array.from({length:38},(_,i)=>i+1).sort((a,b)=>f1[b]-f1[a]||a-b).slice(0,6);
+ const top2=Array.from({length:8},(_,i)=>i+1).sort((a,b)=>f2[b]-f2[a]||a-b).slice(0,3);
+ out.innerHTML=`<div style="margin-top:14px"><div class="statgrid"><div class="stat"><strong>${draws.length}</strong><span>有效期數</span></div><div class="stat"><strong>${draws.length*6}</strong><span>第一區號碼紀錄數</span></div></div><h3 style="font-size:15px;margin:16px 0 5px">第一區出現次數</h3><div class="freq">${Array.from({length:38},(_,i)=>i+1).map(n=>`<div class="freqitem ${top1.includes(n)?'hot':''}">${fmt(n)}<b>${f1[n]}</b></div>`).join('')}</div><h3 style="font-size:15px;margin:16px 0 5px">第二區出現次數</h3><div class="freq" style="grid-template-columns:repeat(4,minmax(0,1fr))">${Array.from({length:8},(_,i)=>i+1).map(n=>`<div class="freqitem ${top2.includes(n)?'hot':''}">${fmt(n)}<b>${f2[n]}</b></div>`).join('')}</div><p class="muted" style="margin-top:12px">橘色只標示你輸入資料中出現次數較高的號碼，不代表下一期比較容易開出。請確認資料來源、期數及順序正確。</p></div>`;
+});
+</script>
+</body>
+</html>
