@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#12304a">
+<title>威力彩智慧分析 V2.0</title>
+<style>
+:root{--navy:#12304a;--blue:#176fa5;--gold:#f2bd4b;--bg:#f3f6fa;--card:#fff;--text:#18232e;--muted:#647482;--line:#dce4ea;--soft:#eaf3f9}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+header{background:linear-gradient(135deg,#12304a,#176fa5);color:#fff;padding:22px 16px}
+header .wrap,main{max-width:980px;margin:auto}h1{font-size:clamp(22px,4vw,30px);margin:0 0 4px}header p{margin:0;color:#e2edf5;font-size:14px}
+main{padding:16px 12px 36px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:0 0 16px;box-shadow:0 4px 16px #17324a0a}
+h2{font-size:19px;margin:0 0 10px}h3{font-size:15px;margin:18px 0 8px}.muted,.hint{color:var(--muted);font-size:13px}.hint{margin-top:7px}
+button,select,input,textarea{font:inherit}button{border:0;border-radius:10px;padding:11px 15px;cursor:pointer;font-weight:650}
+.primary{background:var(--blue);color:white}.secondary{background:#eaf1f6;color:#18394e}.danger{background:#fff0ed;color:#a83b2b}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+textarea{width:100%;min-height:120px;border:1px solid #cbd7e0;border-radius:10px;padding:12px;background:#fff;resize:vertical}
+select,input{border:1px solid #cbd7e0;border-radius:9px;padding:10px;background:white;max-width:100%}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}.stat{background:#f4f8fb;border:1px solid var(--line);border-radius:12px;padding:12px}.stat strong{font-size:24px;display:block;color:var(--navy)}.stat span{font-size:12px;color:var(--muted)}
+.numbers{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}.ball{display:inline-flex;width:37px;height:37px;align-items:center;justify-content:center;border-radius:50%;background:#e6f0f7;color:#164b70;font-weight:750;border:1px solid #c8dce9}.ball.special{background:#fff0bd;color:#70500a;border-color:#f0d77d}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.group{border:1px solid var(--line);border-radius:12px;padding:12px}.group b{font-size:13px;color:var(--muted)}
+.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px}th{background:#f4f8fb}
+.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:12px;background:#eaf3f9;color:#225777;margin:2px}.warn{background:#fff7df;border:1px solid #f0df9c;padding:10px 12px;border-radius:10px;font-size:13px;color:#70581a}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:0 12px 24px}
+@media(max-width:560px){.card{padding:14px}button{width:100%}.row{display:grid;grid-template-columns:1fr}.ball{width:34px;height:34px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>威力彩智慧分析 V2.0</h1><p>自動選號・歷史統計・熱門冷門排行・資料檢查・簡易回測</p></div></header>
+<main>
+<section class="card">
+<h2>① 自動產生號碼</h2>
+<p class="muted">第一區從 01–38 選 6 個不重複號碼；第二區從 01–08 選 1 個號碼。</p>
+<div class="row"><label>產生組數<br><select id="groupCount"><option>1</option><option>2</option><option>3</option><option>5</option><option>10</option><option>20</option></select></label><button class="primary" id="generate">隨機產生號碼</button><button class="secondary" id="clearGenerated">清除結果</button></div>
+<div id="generated" class="groups" aria-live="polite"></div>
+<p class="hint">每組均以隨機方式產生。不同組合或歷史統計不會提高單注中獎機率。</p>
+</section>
+<section class="card">
+<h2>② 加入歷史開獎資料</h2>
+<p class="muted">每行一筆：第一區 6 個號碼＋第二區 1 個號碼。可用逗號、空格或 Tab 分隔，例如 <code>01,08,12,19,27,36,05</code>。第一區不能重複；範圍為 01–38，第二區為 01–08。</p>
+<label for="history"><b>歷史開獎資料（每行一期）</b></label>
+<textarea id="history" spellcheck="false" placeholder="01,08,12,19,27,36,05&#10;02,09,13,20,28,37,06"></textarea>
+<div class="row" style="margin-top:10px"><button class="primary" id="analyze">分析資料</button><button class="secondary" id="sample">填入示範資料</button><button class="danger" id="clearHistory">清空資料</button></div>
+<div id="errors" role="status"></div>
+<div id="stats"></div>
+</section>
+<section class="card">
+<h2>③ 熱門／冷門號碼排行</h2>
+<p class="muted">排行只反映你輸入的歷史資料；樣本期數少時，統計代表性有限。</p>
+<div id="rankings" class="groups"><p class="muted">請先分析歷史資料。</p></div>
+</section>
+<section class="card">
+<h2>④ 簡易回測（歷史資料）</h2>
+<p class="muted">使用較早期資料統計第一區出現次數，再拿這些號碼與下一期比較。這是簡化的歷史模擬，不代表未來預測能力。</p>
+<div class="row"><label>回測策略<br><select id="strategy"><option value="hot">過去較常出現的前 6 號</option><option value="cold">過去較少出現的前 6 號</option><option value="random">隨機選 6 號</option></select></label><button class="primary" id="backtest">執行回測</button></div>
+<div id="backtestResult"></div>
+</section>
+<section class="card">
+<h2>⑤ 使用提醒</h2>
+<div class="warn">本工具僅作資料整理與統計學習，不保證中獎，也不能可靠預測未來開獎。請核對官方開獎紀錄；不要因分析結果增加投注金額。</div>
+</section>
+</main>
+<footer>威力彩智慧分析 V2.0 · 資料只在目前瀏覽器頁面處理，不會自動上傳至伺服器。</footer>
+<script>
+const $=id=>document.getElementById(id);
+let draws=[];
+const pad=n=>String(n).padStart(2,'0');
+function shuffledRange(max){return Array.from({length:max},(_,i)=>i+1).sort(()=>Math.random()-.5)}
+function randomDraw(){const a=shuffledRange(38).slice(0,6).sort((x,y)=>x-y);const b=1+Math.floor(Math.random()*8);return {a,b}}
+function showDraw(d,i){return `<div class="group"><b>第 ${i+1} 組</b><div class="numbers">${d.a.map(n=>`<span class="ball">${pad(n)}</span>`).join('')}<span style="align-self:center">＋</span><span class="ball special">${pad(d.b)}</span></div></div>`}
+$('generate').addEventListener('click',()=>{const n=Number($('groupCount').value);$('generated').innerHTML=Array.from({length:n},(_,i)=>showDraw(randomDraw(),i)).join('')});
+$('clearGenerated').addEventListener('click',()=>$('generated').replaceChildren());
+$('sample').addEventListener('click',()=>{$('history').value='01,08,12,19,27,36,05\\n02,09,13,20,28,37,06\\n03,10,14,21,29,38,07';analyze()});
+$('clearHistory').addEventListener('click',()=>{$('history').value='';draws=[];$('errors').innerHTML='';$('stats').innerHTML='';$('rankings').innerHTML='<p class="muted">請先分析歷史資料。</p>';$('backtestResult').innerHTML=''});
+function parseLine(line,index){
+ const s=line.trim();if(!s)return null;
+ let parts=s.split(/[,\s，、;；]+/).filter(Boolean);
+ if(parts.length!==7)throw new Error(`第 ${index} 行格式錯誤：找到 ${parts.length} 個號碼，應為 7 個。`);
+ if(parts.some(x=>!/^\d{1,2}$/.test(x)))throw new Error(`第 ${index} 行含有非數字號碼。`);
+ const nums=parts.map(Number),a=nums.slice(0,6),b=nums[6];
+ if(a.some(n=>n<1||n>38))throw new Error(`第 ${index} 行第一區號碼必須介於 01–38。`);
+ if(new Set(a).size!==6)throw new Error(`第 ${index} 行第一區號碼不可重複。`);
+ if(b<1||b>8)throw new Error(`第 ${index} 行第二區號碼必須介於 01–08。`);
+ return {a:a.sort((x,y)=>x-y),b};
+}
+function countNums(list,key,max){const c=Array(max+1).fill(0);list.forEach(d=>{(key==='a'?d.a:[d.b]).forEach(n=>c[n]++)});return c}
+function analyze(){
+ const lines=$('history').value.split(/\r?\n/);const parsed=[],errs=[];
+ lines.forEach((line,i)=>{if(!line.trim())return;try{parsed.push(parseLine(line,i+1))}catch(e){errs.push(e.message)}});
+ if(errs.length){$('errors').innerHTML=`<div class="warn">${errs.map(e=>`<div>${e}</div>`).join('')}</div>`;return}
+ if(!parsed.length){$('errors').innerHTML='<div class="warn">請先輸入至少一筆開獎資料。</div>';return}
+ draws=parsed;$('errors').innerHTML=`<p class="hint">格式檢查完成：成功讀取 ${draws.length} 期。</p>`;
+ const c1=countNums(draws,'a',38),c2=countNums(draws,'b',8);
+ $('stats').innerHTML=`<div class="statgrid"><div class="stat"><strong>${draws.length}</strong><span>有效期數</span></div><div class="stat"><strong>${draws.length*6}</strong><span>第一區號碼紀錄數</span></div><div class="stat"><strong>${draws.length}</strong><span>第二區號碼紀錄數</span></div></div><h3>第一區出現次數（01–38）</h3><div class="numbers">${Array.from({length:38},(_,i)=>{const n=i+1;return `<span class="group" style="padding:6px 8px;text-align:center;min-width:54px;background:${c1[n]?'#fff0bd':'#f4f8fb'}"><small>${pad(n)}</small><br><b>${c1[n]}</b></span>`}).join('')}</div><h3>第二區出現次數（01–08）</h3><div class="numbers">${Array.from({length:8},(_,i)=>{const n=i+1;return `<span class="group" style="padding:6px 10px;text-align:center;min-width:54px;background:${c2[n]?'#fff0bd':'#f4f8fb'}"><small>${pad(n)}</small><br><b>${c2[n]}</b></span>`}).join('')}</div>`;
+ const sort=(c,max,desc)=>Array.from({length:max},(_,i)=>i+1).sort((a,b)=>(desc?c[b]-c[a]:c[a]-c[b])||a-b);
+ const hot1=sort(c1,38,true).slice(0,10),cold1=sort(c1,38,false).slice(0,10),hot2=sort(c2,8,true).slice(0,5),cold2=sort(c2,8,false).slice(0,5);
+ const listing=(arr,c)=>arr.map(n=>`<span class="badge">${pad(n)}：${c[n]} 次</span>`).join('');
+ $('rankings').innerHTML=`<div class="group"><h3>第一區較常出現（前 10）</h3>${listing(hot1,c1)}</div><div class="group"><h3>第一區較少出現（前 10）</h3>${listing(cold1,c1)}</div><div class="group"><h3>第二區較常出現</h3>${listing(hot2,c2)}</div><div class="group"><h3>第二區較少出現</h3>${listing(cold2,c2)}</div>`;
+ $('backtestResult').innerHTML='';
+}
+$('analyze').addEventListener('click',analyze);
+$('backtest').addEventListener('click',()=>{
+ if(draws.length<2){$('backtestResult').innerHTML='<div class="warn">至少需要 2 期資料；期數越多，結果才越有參考價值。</div>';return}
+ let total=0,dist=Array(7).fill(0),rows=[];
+ for(let i=1;i<draws.length;i++){
+  const past=draws.slice(0,i),target=draws[i],c=countNums(past,'a',38);
+  let chosen;
+  if($('strategy').value==='random')chosen=shuffledRange(38).slice(0,6);
+  else chosen=Array.from({length:38},(_,j)=>j+1).sort((a,b)=>($('strategy').value==='hot'?c[b]-c[a]:c[a]-c[b])||a-b).slice(0,6);
+  const hits=chosen.filter(n=>target.a.includes(n)).length;dist[hits]++;total+=hits;
+  rows.push(`<tr><td>第 ${i+1} 筆（測試）</td><td>${chosen.sort((a,b)=>a-b).map(pad).join(', ')}</td><td>${target.a.map(pad).join(', ')}</td><td>${hits}</td></tr>`);
+ }
+ $('backtestResult').innerHTML=`<div class="statgrid"><div class="stat"><strong>${draws.length-1}</strong><span>測試期數</span></div><div class="stat"><strong>${(total/(draws.length-1)).toFixed(2)}</strong><span>每期平均命中第一區號碼（0–6）</span></div></div><h3>命中數分布</h3><div class="numbers">${dist.map((n,i)=>`<span class="badge">${i} 個命中：${n} 期</span>`).join('')}</div><p class="hint">此回測採逐期往前測試，並非預測保證；隨機策略每次執行會改變。</p><details><summary>查看逐期結果</summary><div class="tablewrap"><table><thead><tr><th>測試期</th><th>選出的號碼</th><th>該期第一區</th><th>命中</th></tr></thead><tbody>${rows.join('')}</tbody></table></div></details>`;
+});
+</script>
+</body></html>
